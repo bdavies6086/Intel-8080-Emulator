@@ -59,6 +59,8 @@ var intel8080 = (function() {
         }
 
       //  this.memory[8384] = 1;
+
+      this.memory[8427] = "0A";
        
         //this.pc = parseInt("0x1815");
         this.cycle();
@@ -74,7 +76,7 @@ var intel8080 = (function() {
                 this.memory[8384] = "00";
             }
 
-            if(this.pc.toString("16") == "b17") {
+            if(this.pc.toString("16") == "b14") {
                 debugger;
             }
             
@@ -703,7 +705,10 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.ACC] = this.registers[REGISTER_INDEXES.H];
                 break;
             }
-            case "7d": {break;}
+            case "7d": {
+                this.registers[REGISTER_INDEXES.ACC] = this.registers[REGISTER_INDEXES.L];
+                break;
+            }
             // MOV HL into the accumulator
             case "7e": {
                 var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
@@ -922,7 +927,18 @@ var intel8080 = (function() {
             }
             case "d6": {break;}
             case "d7": {break;}
-            case "d8": {break;}
+            case "d8": {
+                if(this.conditionBits.carry == 1) {
+                    var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
+                    this.sp = this.sp + 2;
+                    // Our program counter is going to be pointed to CALL we need to add 3
+                    // To jump past the CALLs address arguments 
+                    this.pc = parseInt(address) + 3;
+                    return;
+                }
+                
+                break;
+            }
             case "d9": {break;}
             // If CY set to 1 jump to address argument
             case "da": {
