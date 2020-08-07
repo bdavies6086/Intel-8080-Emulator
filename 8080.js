@@ -1,14 +1,15 @@
+const REGISTER_INDEXES = {
+    ACC: 0,
+    B: 1,
+    C: 2,
+    D: 3,
+    E: 4,
+    H: 5,
+    L: 6
+}
 var intel8080 = (function() {
 
-    const REGISTER_INDEXES = {
-        ACC: 0,
-        B: 1,
-        C: 2,
-        D: 3,
-        E: 4,
-        H: 5,
-        L: 6
-    }
+    
 
 
     function Intel8080() {
@@ -57,24 +58,43 @@ var intel8080 = (function() {
             this.memory.push(romDump.slice(j,j+2));
         }
 
+      //  this.memory[8384] = 1;
+       
+        //this.pc = parseInt("0x1815");
         this.cycle();
     }
 
     Intel8080.prototype.cycle = function() {
         // Grab the op code out of memory
-      //  while(true) {
+         //while(true) {
+             //let a = 0;
+
            window.setInterval(() => {
-            // if(this.pc.toString("16") == "1a5c") {
-            //     debugger;
-            // }
+            if(this.pc.toString("16") == "add") {
+                this.memory[8384] = "00";
+            }
+
+            if(this.pc.toString("16") == "b17") {
+                debugger;
+            }
+            
+            this.memory[170] = "00";
+           // a = a + 1;
+            //console.log(a);
+          
+           console.log(`PC: ${processor.pc.toString("16")}    ACC: ${window.processor.registers[REGISTER_INDEXES.ACC].toString("16")}      B: ${processor.registers[REGISTER_INDEXES.B].toString("16")}     C: ${processor.registers[REGISTER_INDEXES.C].toString("16")}     D: ${processor.registers[REGISTER_INDEXES.D].toString("16")}      E: ${processor.registers[REGISTER_INDEXES.E].toString("16")}      H: ${processor.registers[REGISTER_INDEXES.H].toString("16")}       L: ${processor.registers[REGISTER_INDEXES.L].toString("16")}`)
             var opCode = this.memory[this.pc];
             this.process(opCode);
-          }, 10);  
+           // this.cycle();
+          }, 0);
+        // }  
+        // }
             
     }
             
 
     Intel8080.prototype.process = function(opCode) {
+      //  console.log(this.pc.toString("16"));
         switch(opCode) {
             case "00": {break;}
             // LXI B 
@@ -89,13 +109,21 @@ var intel8080 = (function() {
                 return;
             }
             case "02": {break;}
-            case "03": {break;}
+            case "03": {
+                
+                var tempResult = parseInt("0x" + this.registers[REGISTER_INDEXES.B].toString(16) + "00") | parseInt("0x" + this.registers[REGISTER_INDEXES.C].toString(16));
+
+                var result = toByteArray((tempResult + 1).toString(16));
+                this.registers[REGISTER_INDEXES.B] = parseInt("0x" + result[0]);
+                this.registers[REGISTER_INDEXES.C] = parseInt("0x" + result[1]);
+
+                break;}
             case "04": {break;}
             // DCR B
             // Decrements register B by 1
             // If this becomes a negative number we need to flip the bits
             case "05": {
-                var tempInt = parseInt(this.registers[REGISTER_INDEXES.B]);
+                var tempInt = this.registers[REGISTER_INDEXES.B];
                 if(tempInt == 0) {
                     this.conditionBits.zeroBit = 0;
                     tempInt = parseInt("0xff");
@@ -105,7 +133,12 @@ var intel8080 = (function() {
                     if(tempInt == 0) {
                         this.conditionBits.zeroBit = 1;
                     }
+                    else {
+                        this.conditionBits.zeroBit = 0;
+                    }
                 }
+
+                // console.log(`TEMP: ${tempInt}`);
                 this.registers[REGISTER_INDEXES.B] = tempInt;
 
                 break;
@@ -122,17 +155,51 @@ var intel8080 = (function() {
             // DAD B
             // Adds BC to HL
             case "09": {
-                var bHex = "0x" + this.registers[REGISTER_INDEXES.B].toString("16") + "00";
-                var cHex = "0x" + this.registers[REGISTER_INDEXES.C].toString("16");
+
+                let bHexPre = this.registers[REGISTER_INDEXES.B].toString("16");
+                if(bHexPre.length == 1) {
+                    bHexPre = "0" + bHexPre;
+                }
+
+                var bHex = "0x" + bHexPre + "00";
+
+                let cHexPre = this.registers[REGISTER_INDEXES.C].toString("16");
+                if(cHexPre.length == 1) {
+                    cHexPre = "0" + cHexPre;
+                }
+
+                var cHex = "0x" + cHexPre;
+
 
                 var bcVal = parseInt(bHex) | parseInt(cHex);
 
-                var hHex = "0x" + this.registers[REGISTER_INDEXES.H].toString("16") + "00";
-                var lHex = "0x" + this.registers[REGISTER_INDEXES.L].toString("16");
+                // console.log(`B: ${parseInt(bHex)}    C: ${parseInt(this.registers[REGISTER_INDEXES.C])}`);
+
+                // console.log(`PC: ${this.pc.toString("16")}`);
+
+                // console.log(`BC: ${bcVal.toString("16")}     BC DEC: ${bcVal}`);
+
+                let hHexPre = this.registers[REGISTER_INDEXES.H].toString("16");
+                if(hHexPre.length == 1) {
+                    hHexPre = "0" + hHexPre;
+                }
+
+                var hHex = "0x" + hHexPre + "00";
+
+                let lHexPre = this.registers[REGISTER_INDEXES.L].toString("16");
+                if(lHexPre.length == 1) {
+                    lHexPre = "0" + lHexPre;
+                }
+
+                var lHex = "0x" + lHexPre;
 
                 var hlVal = parseInt(hHex) | parseInt(lHex);
 
+                // console.log(`HL: ${hlVal.toString("16")}     HL DEC: ${hlVal}`);
+
                 var result = bcVal + hlVal;
+
+                // console.log(`RESULT: ${result}`);
 
                 this.conditionBits.zeroBit = result == 0 ? 1: 0;
                 if(result & 0x80) {
@@ -151,7 +218,13 @@ var intel8080 = (function() {
                 this.setParityBit(result & 0xff, 8);
 
                 var bytes = toByteArray(result.toString("16"));
+
+                // console.log(`BYTES RESULT: ${bytes.join()}`);
+                if(bytes.join() == "25,1e") {
+                    //debugger;
+                }
                 if(bytes.length == 1) {
+                    this.registers[REGISTER_INDEXES.H] = 0;
                     this.registers[REGISTER_INDEXES.L] = parseInt("0x" + bytes[0]);
                 }
                 else {
@@ -162,7 +235,15 @@ var intel8080 = (function() {
 
                 break;
             }
-            case "0a": {break;}
+            case "0a": {
+                var tempD = parseInt("0x" + this.registers[REGISTER_INDEXES.B].toString("16") + "00");
+                var tempE = parseInt("0x" + this.registers[REGISTER_INDEXES.C].toString("16"));
+                var address = tempD | tempE;
+                
+                this.registers[REGISTER_INDEXES.ACC] = parseInt("0x" + this.memory[address]);
+                break;
+                break;
+            }
             case "0b": {break;}
             case "0c": {break;}
             // DCR C - decrease the value of the C register by 1
@@ -176,6 +257,9 @@ var intel8080 = (function() {
                     tempInt = tempInt - 1;
                     if(tempInt == 0) {
                         this.conditionBits.zeroBit = 1;
+                    }
+                    else {
+                        this.conditionBits.zeroBit = 0;
                     }
                 }
                 this.registers[REGISTER_INDEXES.C] = tempInt;
@@ -192,7 +276,7 @@ var intel8080 = (function() {
             case "0f": {
                 var temp = this.registers[REGISTER_INDEXES.ACC];
                 var result = ((temp & 1) << 7 | temp >> 1);
-                this.conditionBits.carry = result & 1;
+                this.conditionBits.carry = (result & 1) == 1;
                 this.registers[REGISTER_INDEXES.ACC] = result;
                 break;
             }
@@ -225,19 +309,42 @@ var intel8080 = (function() {
             // DAD D
             // Adds HL to DE
             case "19": {
-                var hHex = "0x" + this.registers[REGISTER_INDEXES.H].toString("16") + "00";
+
+                let hHexpre = this.registers[REGISTER_INDEXES.H].toString("16");
+                if(hHexpre.length == 1) {
+                    hHexpre = "0" + hHexpre;
+                }
+
+                var hHex = "0x" + hHexpre + "00";
                 if(this.registers[REGISTER_INDEXES.H] == 0) {
                     hHex = hHex + "0";
                 }
-                var lHex = "0x" + this.registers[REGISTER_INDEXES.L].toString("16");
+
+                let lHexPre = this.registers[REGISTER_INDEXES.L].toString("16");
+                if(lHexPre.length == 1) {
+                    lHexPre = "0" + lHexPre;
+                }
+
+                var lHex = "0x" + lHexPre;
 
                 var hlVal = (parseInt(hHex) | parseInt(lHex));
 
-                var dHex = "0x" + this.registers[REGISTER_INDEXES.D].toString("16") + "00";
+                let dHexPre = this.registers[REGISTER_INDEXES.D].toString("16");
+                if(dHexPre.length == 1) {
+                    dHexPre = "0" + dHexPre;
+                }
+
+                var dHex = "0x" + dHexPre + "00";
                 if(this.registers[REGISTER_INDEXES.D] == 0) {
                     dHex = dHex + "0";
                 }
-                var eHex = "0x" + this.registers[REGISTER_INDEXES.E].toString("16");
+
+                let eHexPre = this.registers[REGISTER_INDEXES.E].toString("16");
+                if(eHexPre.length == 1) {
+                    eHexPre = "0" + eHexPre;
+                }
+
+                var eHex = "0x" + eHexPre;
 
                 var deVal = (parseInt(dHex) | parseInt(eHex));
 
@@ -302,7 +409,7 @@ var intel8080 = (function() {
             // INX H
             // Increment the HL pair by 1
             case "23": {
-                var tempResult = parseInt("0x" + this.registers[REGISTER_INDEXES.H].toString(16) + "00".toString(16)) | parseInt("0x" + this.registers[REGISTER_INDEXES.L].toString(16));
+                var tempResult = parseInt("0x" + this.registers[REGISTER_INDEXES.H].toString(16) + "00") | parseInt("0x" + this.registers[REGISTER_INDEXES.L].toString(16));
 
                 var result = toByteArray((tempResult + 1).toString(16));
                 this.registers[REGISTER_INDEXES.H] = parseInt("0x" + result[0]);
@@ -326,11 +433,22 @@ var intel8080 = (function() {
             // DAD 
             // doubles the values of HL
             case "29": {
-                var hHex = "0x" + this.registers[REGISTER_INDEXES.H].toString("16") + "00";
+
+                let hHexPre = this.registers[REGISTER_INDEXES.H].toString("16");
+                if(hHexPre.length == 1) {
+                    hHexPre = "0" + hHexPre;
+                }
+
+                var hHex = "0x" + hHexPre + "00";
                 if(this.registers[REGISTER_INDEXES.H] == 0) {
                     hHex = hHex + "0";
                 }
-                var lHex = "0x" + this.registers[REGISTER_INDEXES.L].toString("16");
+
+                let lHexPre = this.registers[REGISTER_INDEXES.L].toString("16");
+                if(lHexPre.length == 1) {
+                    lHexPre = "0" + lHexPre;
+                }
+                var lHex = "0x" + lHexPre;
 
                 var result = (parseInt(hHex) | parseInt(lHex)) * 2;
                 this.conditionBits.zeroBit = result == 0 ? 1: 0;
@@ -415,7 +533,8 @@ var intel8080 = (function() {
                 this.pc = this.pc + 2;
                 return;
             }
-            case "37": {break;}
+            case "37": {this.conditionBits.carry = 1; 
+                break;}
             case "38": {break;}
             case "39": {break;}
             // LDA address
@@ -429,7 +548,26 @@ var intel8080 = (function() {
             }
             case "3b": {break;}
             case "3c": {break;}
-            case "3d": {break;}
+            case "3d": {
+                var tempInt = this.registers[REGISTER_INDEXES.ACC];
+                if(tempInt == 0) {
+                    this.conditionBits.zeroBit = 0;
+                    tempInt = parseInt("0xff");
+                }
+                else {
+                    tempInt = tempInt - 1;
+                    if(tempInt == 0) {
+                        this.conditionBits.zeroBit = 1;
+                    }
+                    else {
+                        this.conditionBits.zeroBit = 0;
+                    }
+                }
+
+                // console.log(`TEMP: ${tempInt}`);
+                this.registers[REGISTER_INDEXES.ACC] = tempInt;
+                break;
+            }
             // MVI A
             // Moves a byte into the accumulator
             case "3e": {
@@ -454,7 +592,10 @@ var intel8080 = (function() {
             case "4c": {break;}
             case "4d": {break;}
             case "4e": {break;}
-            case "4f": {break;}
+            case "4f": {
+                this.registers[REGISTER_INDEXES.C] = this.registers[REGISTER_INDEXES.ACC];    
+                break;
+            }
             case "50": {break;}
             case "51": {break;}
             case "52": {break;}
@@ -465,10 +606,13 @@ var intel8080 = (function() {
             // Moves the value HL is pointing to into register D
             case "56": {
                 var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
-                this.registers[REGISTER_INDEXES.D] = this.memory[parseInt(address)];
+                this.registers[REGISTER_INDEXES.D] = parseInt("0x" + this.memory[parseInt(address)]);
                 break;
             }
-            case "57": {break;}
+            case "57": {
+                this.registers[REGISTER_INDEXES.D] = this.registers[REGISTER_INDEXES.ACC];    
+                break;
+            }
             case "58": {break;}
             case "59": {break;}
             case "5a": {break;}
@@ -477,11 +621,15 @@ var intel8080 = (function() {
             case "5d": {break;}
             // MOV whatevers in HL into Register E
             case "5e": {
+                //debugger;
                 var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
-                this.registers[REGISTER_INDEXES.E] = this.memory[parseInt(address)];
+                this.registers[REGISTER_INDEXES.E] = parseInt("0x" + this.memory[parseInt(address)]);
                 break;
             }
-            case "5f": {break;}
+            case "5f": {
+                this.registers[REGISTER_INDEXES.E] = this.registers[REGISTER_INDEXES.ACC];    
+                break;
+            }
             case "60": {break;}
             case "61": {break;}
             case "62": {break;}
@@ -492,10 +640,13 @@ var intel8080 = (function() {
             // Moves what HL is pointing to into H
             case "66": {
                 var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
-                this.registers[REGISTER_INDEXES.H] = this.memory[parseInt(address)];
+                this.registers[REGISTER_INDEXES.H] = parseInt("0x" +  this.memory[parseInt(address)]);
                 break;
             }
-            case "67": {break;}
+            case "67": {
+                this.registers[REGISTER_INDEXES.H] = this.registers[REGISTER_INDEXES.ACC];    
+                break;
+            }
             case "68": {break;}
             case "69": {break;}
             case "6a": {break;}
@@ -520,10 +671,14 @@ var intel8080 = (function() {
             // Moves whatevers in the accumulator into the memory 
             // at the address currently stored in HL
             case "77": {
-                if(this.pc.toString("16") != "1a33") {
-                    debugger;
+                if(this.pc.toString("16") != "1443") {
+                   //  debugger;
                 }
                 var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
+                let a = this.registers[REGISTER_INDEXES.ACC].toString("16");
+                if(a == undefined) {
+                   // debugger;
+                }
                 this.memory[parseInt(address)] = this.registers[REGISTER_INDEXES.ACC].toString("16");
                 break;
             }
@@ -552,7 +707,7 @@ var intel8080 = (function() {
             // MOV HL into the accumulator
             case "7e": {
                 var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
-                this.registers[REGISTER_INDEXES.ACC] = this.memory[parseInt(address)];
+                this.registers[REGISTER_INDEXES.ACC] = parseInt("0x" + this.memory[parseInt(address)]);
                 break;
             }
             case "7f": {break;}
@@ -692,7 +847,17 @@ var intel8080 = (function() {
                 return;
             }
             case "c7": {break;}
-            case "c8": {break;}
+            case "c8": {
+                if(this.conditionBits.zeroBit == 1) {
+                    var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
+                    this.sp = this.sp + 2;
+                    // Our program counter is going to be pointed to CALL we need to add 3
+                    // To jump past the CALLs address arguments 
+                    this.pc = parseInt(address) + 3;
+                    return;
+                }
+                break;
+            }
             // RET
             // Return out of a procedure
             // Increment the stack pointer by 2, grab the address
@@ -731,6 +896,7 @@ var intel8080 = (function() {
             case "d1": {
                 this.registers[REGISTER_INDEXES.E] = parseInt("0x" + this.memory[this.sp]);
                 this.sp = this.sp + 1;
+
                 this.registers[REGISTER_INDEXES.D] = parseInt("0x" + this.memory[this.sp]);
                 this.sp = this.sp + 1;
                 break;
@@ -760,13 +926,13 @@ var intel8080 = (function() {
             case "d9": {break;}
             // If CY set to 1 jump to address argument
             case "da": {
-                // if(this.conditionBits.carry == 1) {
-                //     var address = "0x" + this.memory[this.pc + 2] + this.memory[this.pc + 1];
-                //     this.pc = parseInt(address);
-                //     return;
-                // }
-                // this.pc = this.pc + 3;
-                // return;
+                if(this.conditionBits.carry == 1) {
+                    var address = "0x" + this.memory[this.pc + 2] + this.memory[this.pc + 1];
+                    this.pc = parseInt(address);
+                    return;
+                }
+                this.pc = this.pc + 3;
+                return;
             }
             // Not implemented
             case "db": {
@@ -835,21 +1001,23 @@ var intel8080 = (function() {
             case "ec": {break;}
             case "ed": {break;}
             case "ee": {break;}
-            case "ef": {break;}
+            case "ef": {
+                break;
+            }
             case "f0": {break;}
             // POP PSW
             // Pops the PSW flags and the ACC off the stack
             case "f1": {
+                var accVal = parseInt("0x" + this.memory[this.sp])
+                this.registers[REGISTER_INDEXES.ACC] = accVal;
+                this.sp = this.sp + 1;
+
                 var pswFlags = parseInt("0x" + this.memory[this.sp]);
                 this.conditionBits.zeroBit = pswFlags >> 4 & 1;
                 this.conditionBits.sign = pswFlags >> 3 & 1;
                 this.conditionBits.parBit = pswFlags >> 2 & 1;
                 this.conditionBits.carry = pswFlags >> 1 & 1;
                 this.conditionBits.auxCarry = pswFlags & 1;
-                this.sp = this.sp + 1;
-
-                var accVal = parseInt("0x" + this.memory[this.sp])
-                this.registers[REGISTER_INDEXES.ACC] = accVal;
                 this.sp = this.sp + 1;
                 break;
             }
@@ -885,11 +1053,13 @@ var intel8080 = (function() {
                 // Bit 7 is the sign bit. If we AND our result with 128 we know if the sign bit was on
                 this.conditionBits.sign = result == (result & 0x80);
                 // If the arg is greater than the ACC val the carry bit will be set
-                this.conditionBits.carry = tempAcc < arg;
+                this.conditionBits.carry = tempAcc < arg || tempAcc == 255 ? 1 : 0;
                 this.setParityBit(result, 8);
+                this.pc = this.pc + 2;
                 break;
             }
             case "ff": {break;}
+            default: {}
         }
         
         this.pc = this.pc + 1;
@@ -929,7 +1099,7 @@ var intel8080 = (function() {
 
     function getHexAddress(highestByte, lowestByte) {
         var tempA = parseInt("0x" + highestByte.toString("16") + "00");
-        var tempB = parseInt("0x" + lowestByte.toString("16"));
+        var tempB = parseInt("0x00" + lowestByte.toString("16"));
         var tempC = tempA | tempB;
         return "0x" + tempC.toString("16");
     }
@@ -959,33 +1129,98 @@ window.onload = function() {
     this.theCanvas = document.getElementById("screen");
     this.context = this.theCanvas.getContext("2d");
 
+    this.accEle = document.getElementById("acc");
+    this.bEle = document.getElementById("b");
+    this.cEle = document.getElementById("c");
+    this.dEle = document.getElementById("d");
+    this.eEle = document.getElementById("e");
+    this.hEle = document.getElementById("h");
+    this.lEle = document.getElementById("l");
+    this.pcEle = document.getElementById("pc");
+
+
+    var startAddress = document.getElementById("startAddress");
+            var endAddress = document.getElementById("endAddress");
+
+            // startAddress.value = "3501";
+            // endAddress.value = "350a";
+            // window.memoryDump();
+
     setInterval(() => {
         render();
+        window.processor.memory[8384] = window.processor.memory[8384] - 1;
     }, 300);
 }
 
 function render() {
-   var imageData = this.context.createImageData(224, 256);
-   var counter = 9216;
-   var pixelCount = 0;
-   for(var j = 0; j < 256;j++) {
-        for(var i = 0; i < 28; i++) {
+
+    // console.log(`PC: ${processor.pc.toString("16")}    ACC: ${window.processor.registers[REGISTER_INDEXES.ACC].toString("16")}      B: ${processor.registers[REGISTER_INDEXES.B].toString("16")}     C: ${processor.registers[REGISTER_INDEXES.C].toString("16")}     D: ${processor.registers[REGISTER_INDEXES.D].toString("16")}      E: ${processor.registers[REGISTER_INDEXES.E].toString("16")}      H: ${processor.registers[REGISTER_INDEXES.H].toString("16")}       L: ${processor.registers[REGISTER_INDEXES.L].toString("16")}`)
+
+    this.accEle.innerHTML = "ACC: " + window.processor.registers[REGISTER_INDEXES.ACC].toString("16");
+    this.bEle.innerHTML = "B: " +  processor.registers[REGISTER_INDEXES.B].toString("16");
+    this.cEle.innerHTML = "C: " + processor.registers[REGISTER_INDEXES.C].toString("16");
+    this.dEle.innerHTML = "D: " + processor.registers[REGISTER_INDEXES.D].toString("16");
+    this.eEle.innerHTML = "E: " + processor.registers[REGISTER_INDEXES.E].toString("16");
+    this.hEle.innerHTML = "H: " + processor.registers[REGISTER_INDEXES.H].toString("16");
+    this.lEle.innerHTML = "L: " + processor.registers[REGISTER_INDEXES.L].toString("16");
+    this.pcEle.innerHTML = "PC: " + processor.pc.toString("16");
+    
+   // this.context.fillStyle = "rgba("+0+","+0+","+0+","+1+")";
+  //  this.context.fillRect(20, 20, 100, 100);
+    //return;
+  // var imageData = this.context.createImageData(224, 256);
+  this.context.imageSmoothingEnabled= false;
+  this.context.fillStyle = "rgba("+0+","+0+","+0+","+1+")";
+  this.context.fillRect(0,0, 224, 260);
+    var counter = 9216;
+
+    let pixY = 256;
+    let pixX = 0;
+
+    // loop up 256
+
+    let theMult = 0;
+    // debugger;
+    for(var k = 0; k < 224; k++) {
+        
+        for(var l = 256; l > 0; l= l - 8) {
             var tempMem = window.processor.memory[counter];
             var val = parseInt("0x" + tempMem);
-            for(var k = 7; k>=0; k--) {
-                var theBit = val >> k;
+            if(val > 0) {
+                // debugger;
+            }
+            for(var m = 0; m < 8; m++) {
+                var theBit = val & 1;
+                val = val >> 1;
                 if(theBit & 1) {
-                    imageData.data[pixelCount] = 0x00;
+                    // imageData.data[pixelCount] = 0x00;
+                    // imageData.data[pixelCount + 1] = 0x00;
+                    // imageData.data[pixelCount + 2] = 0x00;
+                    // imageData.data[pixelCount + 3] = 0x00;
+                    this.context.fillStyle = "rgba("+0+","+256+","+0+","+1+")";
+                    this.context.fillRect(k,l - m, 1, 1 );
+                    
                 }
-                else {
-                    imageData.data[pixelCount] = 0xff;
-                }
-                pixelCount = pixelCount + 1;
-                
+        
             }
             counter = counter + 1;
         }
-   }
-   this.context.putImageData(imageData, 0, 0);
+    }
+
+//    for(var j = 0; j < 256;j++) {
+//         for(var i = 0; i < 28; i++) {
+            
+//             if(val > 0) {
+//               //   debugger;
+//             }
+            
+               
+//                 pixelCount = pixelCount + 1;
+                
+//             }
+//             counter = counter + 1;
+//         }
+   
+   //this.context.putImageData(imageData, 0, 0);
 }
 
