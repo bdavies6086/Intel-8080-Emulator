@@ -60,10 +60,12 @@ var intel8080 = (function() {
 
       //  this.memory[8384] = 1;
 
-      this.memory[8427] = "0A";
+      this.memory[8427] = "FF";
        
         //this.pc = parseInt("0x1815");
-        this.cycle();
+       // this.cycle();
+
+        doSomething();
     }
 
     Intel8080.prototype.cycle = function() {
@@ -76,7 +78,7 @@ var intel8080 = (function() {
                 this.memory[8384] = "00";
             }
 
-            if(this.pc.toString("16") == "b14") {
+            if(this.pc.toString("16") == "1947") {
                 debugger;
             }
             
@@ -1162,11 +1164,23 @@ window.onload = function() {
             // endAddress.value = "350a";
             // window.memoryDump();
 
-    setInterval(() => {
+    // setInterval(() => {
+    //     render();
+    //     window.processor.memory[8384] = window.processor.memory[8384] - 1;
+    // }, 300);
+}
+
+function doSomething() {
+    window.requestAnimationFrame(() => {
         render();
         window.processor.memory[8384] = window.processor.memory[8384] - 1;
-    }, 300);
+        window.processor.cycle();
+        doSomething();
+
+    });
 }
+
+
 
 function render() {
 
