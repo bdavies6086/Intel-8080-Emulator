@@ -78,7 +78,7 @@ var intel8080 = (function() {
                 this.memory[8384] = "00";
             }
 
-            if(this.pc.toString("16") == "1947") {
+            if(this.pc.toString("16") == "b4a") {
                 debugger;
             }
             
@@ -1074,7 +1074,7 @@ var intel8080 = (function() {
                 this.conditionBits.carry = tempAcc < arg || tempAcc == 255 ? 1 : 0;
                 this.setParityBit(result, 8);
                 this.pc = this.pc + 2;
-                break;
+                return;
             }
             case "ff": {break;}
             default: {}
@@ -1174,6 +1174,7 @@ function doSomething() {
     window.requestAnimationFrame(() => {
         render();
         window.processor.memory[8384] = window.processor.memory[8384] - 1;
+        //window.processor.memory[8385] = "04";
         window.processor.cycle();
         doSomething();
 
