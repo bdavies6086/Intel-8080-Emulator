@@ -61,7 +61,7 @@ var intel8080 = (function() {
       //  this.memory[8384] = 1;
 
       this.memory[8427] = "FF";
-       
+      this.memory[8222] = "00";       
         //this.pc = parseInt("0x1815");
        // this.cycle();
 
@@ -78,11 +78,12 @@ var intel8080 = (function() {
                 this.memory[8384] = "00";
             }
 
-            if(this.pc.toString("16") == "b4a") {
+            if(this.pc.toString("16") == "57") {
                 debugger;
             }
             
             this.memory[170] = "00";
+            this.memory[8222] = "00";   
            // a = a + 1;
             //console.log(a);
           
@@ -800,7 +801,17 @@ var intel8080 = (function() {
             case "bd": {break;}
             case "be": {break;}
             case "bf": {break;}
-            case "c0": {break;}
+            case "c0": {
+                if(!this.conditionBits.zeroBit) {
+                    var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
+                    this.sp = this.sp + 2;
+                    // Our program counter is going to be pointed to CALL we need to add 3
+                    // To jump past the CALLs address arguments 
+                    this.pc = parseInt(address) + 3;
+                    return;
+                }
+                break;
+            }
             // POP BC off the stack and into the registers
             case "c1": {
                 this.registers[REGISTER_INDEXES.C] = parseInt("0x" + this.memory[this.sp]);
@@ -927,7 +938,15 @@ var intel8080 = (function() {
                 this.memory[this.sp] = eHex;
                 break;
             }
-            case "d6": {break;}
+            case "d6": {
+                var arg = parseInt("0x" + this.memory[this.pc + 1]);
+                var accVal = parseInt("0x" + this.registers[REGISTER_INDEXES.ACC]);
+                var result = arg - accVal;
+                this.registers[REGISTER_INDEXES.ACC] = result.toString("16");
+                this.setConditionBits(result, 8);
+                this.pc = this.pc + 2;
+                return;
+            }
             case "d7": {break;}
             case "d8": {
                 if(this.conditionBits.carry == 1) {
@@ -954,8 +973,10 @@ var intel8080 = (function() {
             }
             // Not implemented
             case "db": {
-                // this.pc = this.pc + 2;
-                // return;
+                // Controller input
+                this.registers[REGISTER_INDEXES.ACC] = "00"; 
+                this.pc = this.pc + 2;
+                return;
             }
             case "dc": {break;}
             case "dd": {break;}
