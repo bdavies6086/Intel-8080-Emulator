@@ -7,10 +7,8 @@ const REGISTER_INDEXES = {
     H: 5,
     L: 6
 }
+
 var intel8080 = (function() {
-
-    
-
 
     function Intel8080() {
 
@@ -45,6 +43,14 @@ var intel8080 = (function() {
 
     Intel8080.prototype.memory = [];
 
+    Intel8080.prototype.interruptsEnabled = true;
+
+    Intel8080.prototype.interruptPointer;
+
+    Intel8080.prototype.handleInterrupt = function (pointer) {
+        this.interruptPointer = pointer;
+    }
+
     Intel8080.prototype.setup = function(romDump) {
         this.romDump = romDump;
         this.pc[0] = 0;
@@ -74,20 +80,33 @@ var intel8080 = (function() {
              //let a = 0;
 
            window.setInterval(() => {
-            if(this.pc.toString("16") == "add") {
-                this.memory[8384] = "00";
-            }
+            if(this.interruptsEnabled && !!this.interruptPointer) {
+                var currentAddress = this.pc.toString("16");
+                var byteArr = toByteArray(currentAddress);
+               // debugger;
+                
+                this.sp = this.sp -1;
+                this.memory[this.sp] = byteArr[0];
+                this.sp = this.sp -1;
+                this.memory[this.sp] = byteArr[1];
 
-            if(this.pc.toString("16") == "57") {
-                debugger;
+                this.pc = parseInt(this.interruptPointer);
+                this.interruptPointer = undefined;
             }
+            // if(this.pc.toString("16") == "add") {
+            //     this.memory[8384] = "00";
+            // }
+
+            // if(this.pc.toString("16") == "57") {
+            //     debugger;
+            // }
             
-            this.memory[170] = "00";
-            this.memory[8222] = "00";   
+           // this.memory[170] = "00";
+           // this.memory[8222] = "00";   
            // a = a + 1;
             //console.log(a);
           
-           console.log(`PC: ${processor.pc.toString("16")}    ACC: ${window.processor.registers[REGISTER_INDEXES.ACC].toString("16")}      B: ${processor.registers[REGISTER_INDEXES.B].toString("16")}     C: ${processor.registers[REGISTER_INDEXES.C].toString("16")}     D: ${processor.registers[REGISTER_INDEXES.D].toString("16")}      E: ${processor.registers[REGISTER_INDEXES.E].toString("16")}      H: ${processor.registers[REGISTER_INDEXES.H].toString("16")}       L: ${processor.registers[REGISTER_INDEXES.L].toString("16")}`)
+          // console.log(`PC: ${processor.pc.toString("16")}    ACC: ${window.processor.registers[REGISTER_INDEXES.ACC].toString("16")}      B: ${processor.registers[REGISTER_INDEXES.B].toString("16")}     C: ${processor.registers[REGISTER_INDEXES.C].toString("16")}     D: ${processor.registers[REGISTER_INDEXES.D].toString("16")}      E: ${processor.registers[REGISTER_INDEXES.E].toString("16")}      H: ${processor.registers[REGISTER_INDEXES.H].toString("16")}       L: ${processor.registers[REGISTER_INDEXES.L].toString("16")}`)
             var opCode = this.memory[this.pc];
             this.process(opCode);
            // this.cycle();
@@ -96,10 +115,13 @@ var intel8080 = (function() {
         // }
             
     }
+
+    
             
 
     Intel8080.prototype.process = function(opCode) {
-      //  console.log(this.pc.toString("16"));
+
+      
         switch(opCode) {
             case "00": {break;}
             // LXI B 
@@ -155,8 +177,8 @@ var intel8080 = (function() {
                 this.pc = this.pc + 2;
                 return;
             }
-            case "07": {break;}
-            case "08": {break;}
+            case "07": {console.log(`not implemented ` + opCode);break;}
+            case "08": {console.log(`not implemented ` + opCode);break;}
             // DAD B
             // Adds BC to HL
             case "09": {
@@ -249,8 +271,8 @@ var intel8080 = (function() {
                 break;
                 break;
             }
-            case "0b": {break;}
-            case "0c": {break;}
+            case "0b": {console.log(`not implemented ` + opCode);break;}
+            case "0c": {console.log(`not implemented ` + opCode);break;}
             // DCR C - decrease the value of the C register by 1
             case "0d": {
                 var tempInt = this.registers[REGISTER_INDEXES.C];
@@ -306,11 +328,11 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.E] = parseInt("0x" + result[1]);
                 break;
             }
-            case "14": {break;}
-            case "15": {break;}
-            case "16": {break;}
-            case "17": {break;}
-            case "18": {break;}
+            case "14": {console.log(`not implemented ` + opCode);break;}
+            case "15": {console.log(`not implemented ` + opCode);break;}
+            case "16": {console.log(`not implemented ` + opCode);break;}
+            case "17": {console.log(`not implemented ` + opCode);break;}
+            case "18": {console.log(`not implemented ` + opCode);break;}
             // DAD D
             // Adds HL to DE
             case "19": {
@@ -394,12 +416,20 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.ACC] = parseInt("0x" + this.memory[address]);
                 break;
             }
-            case "1b": {break;}
-            case "1c": {break;}
-            case "1d": {break;}
-            case "1e": {break;}
-            case "1f": {break;}
-            case "20": {break;}
+            case "1b": {console.log(`not implemented ` + opCode);break;}
+            case "1c": {console.log(`not implemented ` + opCode);break;}
+            case "1d": {console.log(`not implemented ` + opCode);break;}
+            case "1e": {console.log(`not implemented ` + opCode);break;}
+            case "1f": {
+                var temp = this.registers[REGISTER_INDEXES.ACC];
+                this.conditionBits.carry = (result & 1) == 1;
+                var result = (temp >> 1 | (temp) << 7);
+                
+                this.registers[REGISTER_INDEXES.ACC] = result;
+                break;
+                //console.log(`not implemented ` + opCode);break;
+            }
+            case "20": {console.log(`not implemented ` + opCode);break;}
             // LXI H
             // Moves a byte into register H
             // and moves a byte into register L
@@ -410,7 +440,16 @@ var intel8080 = (function() {
                 this.pc = this.pc + 3;
                 return;
             }
-            case "22": {break;}
+            case "22": {
+                var address = "0x" + this.memory[this.pc + 2] + this.memory[this.pc + 1];
+                address = parseInt(address);
+                var tempH = parseInt("0x" + this.registers[REGISTER_INDEXES.H].toString("16") + "00");
+                var tempL = parseInt("0x" + this.registers[REGISTER_INDEXES.L].toString("16"));
+                var val = tempH | tempL;
+                this.memory[address] = val.toString("16");
+                this.pc = this.pc + 3;
+                return;
+            }
             // INX H
             // Increment the HL pair by 1
             case "23": {
@@ -421,8 +460,8 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.L] = parseInt("0x" + result[1]);
                 break;
             }
-            case "24": {break;}
-            case "25": {break;}
+            case "24": {console.log(`not implemented ` + opCode);break;}
+            case "25": {console.log(`not implemented ` + opCode);break;}
             // MVI L
             // Moves a byte into the L register
             // Were going to put H in as were doing big endian and H
@@ -483,13 +522,23 @@ var intel8080 = (function() {
                 
                 break;
             }
-            case "2a": {break;}
-            case "2b": {break;}
-            case "2c": {break;}
-            case "2d": {break;}
-            case "2e": {break;}
-            case "2f": {break;}
-            case "30": {break;}
+            case "2a": {
+                this.registers[REGISTER_INDEXES.H] = parseInt("0x" + this.memory[this.pc + 2]);
+                this.registers[REGISTER_INDEXES.L] = parseInt("0x" + this.memory[this.pc + 1]);
+                // Move the PC past the data
+                this.pc = this.pc + 3;
+                return;
+            }
+            case "2b": {console.log(`not implemented ` + opCode);break;}
+            case "2c": {console.log(`not implemented ` + opCode);break;}
+            case "2d": {console.log(`not implemented ` + opCode);break;}
+            case "2e": {
+                this.registers[REGISTER_INDEXES.L] = parseInt("0x" + this.memory[this.pc + 1]);
+                this.pc = this.pc + 2;
+                return;
+            }
+            case "2f": {console.log(`not implemented ` + opCode);break;}
+            case "30": {console.log(`not implemented ` + opCode);break;}
             // LXI SP
             // Points the stack pointer to a certain memory address
             case "31": {
@@ -507,26 +556,27 @@ var intel8080 = (function() {
                 this.pc = this.pc + 3;
                 return;
             }
-            case "33": {break;}
-            case "34": {break;}
+            case "33": {console.log(`not implemented ` + opCode);break;}
+            case "34": {console.log(`not implemented ` + opCode);break;}
             // DCR M
             // Decrements the value stored in HL by 1
             case "35": {
-                // var hHex = "0x" + this.registers[REGISTER_INDEXES.H].toString("16") + "00";
-                // var lHex = "0x" + this.registers[REGISTER_INDEXES.L].toString("16");
+                //console.log(`not implemented ` + opCode);
+                var hHex = "0x" + this.registers[REGISTER_INDEXES.H].toString("16") + "00";
+                var lHex = "0x" + this.registers[REGISTER_INDEXES.L].toString("16");
 
-                // var hl = parseInt(hHex) | parseInt(lHex);
+                var hl = parseInt(hHex) | parseInt(lHex);
 
-                // hl = hl -1;
-                // this.setConditionBits(hl, 16);
-                // var byteResult = this.toByteArray(hl.toString("16"));
-                // if(byteResult.length == 1) {
-                //     this.registers[REGISTER_INDEXES.L] = parseInt("0x" + byteResult[0]);
-                // }
-                // else {
-                //     this.registers[REGISTER_INDEXES.H] = parseInt("0x" + byteResult[0]);
-                //     this.registers[REGISTER_INDEXES.L] = parseInt("0x" + byteResult[1]);
-                // } 
+                hl = hl -1;
+                this.setConditionBits(hl, 16);
+                var byteResult = toByteArray(hl.toString("16"));
+                if(byteResult.length == 1) {
+                    this.registers[REGISTER_INDEXES.L] = parseInt("0x" + byteResult[0]);
+                }
+                else {
+                    this.registers[REGISTER_INDEXES.H] = parseInt("0x" + byteResult[0]);
+                    this.registers[REGISTER_INDEXES.L] = parseInt("0x" + byteResult[1]);
+                } 
 
                 // break;
             }
@@ -540,19 +590,19 @@ var intel8080 = (function() {
             }
             case "37": {this.conditionBits.carry = 1; 
                 break;}
-            case "38": {break;}
-            case "39": {break;}
+            case "38": {console.log(`not implemented ` + opCode);break;}
+            case "39": {console.log(`not implemented ` + opCode);break;}
             // LDA address
             // loads the memory at address arg into the accumulator
             case "3a": {
                 var address = "0x" + this.memory[this.pc + 2] + this.memory[this.pc + 1];
-                var data = this.memory[parseInt(address)];
+                var data = this.memory[parseInt(address)] ?? "00";
                 this.registers[REGISTER_INDEXES.ACC] = parseInt("0x" + data);
                 this.pc = this.pc + 3;
                 return;
             }
-            case "3b": {break;}
-            case "3c": {break;}
+            case "3b": {console.log(`not implemented ` + opCode);break;}
+            case "3c": {console.log(`not implemented ` + opCode);break;}
             case "3d": {
                 var tempInt = this.registers[REGISTER_INDEXES.ACC];
                 if(tempInt == 0) {
@@ -581,32 +631,36 @@ var intel8080 = (function() {
                 this.pc = this.pc + 2;
                 return;
             }
-            case "3f": {break;}
-            case "40": {break;}
-            case "41": {break;}
-            case "42": {break;}
-            case "43": {break;}
-            case "44": {break;}
-            case "45": {break;}
-            case "46": {break;}
-            case "47": {break;}
-            case "48": {break;}
-            case "49": {break;}
-            case "4a": {break;}
-            case "4b": {break;}
-            case "4c": {break;}
-            case "4d": {break;}
-            case "4e": {break;}
+            case "3f": {console.log(`not implemented ` + opCode);break;}
+            case "40": {console.log(`not implemented ` + opCode);break;}
+            case "41": {console.log(`not implemented ` + opCode);break;}
+            case "42": {console.log(`not implemented ` + opCode);break;}
+            case "43": {console.log(`not implemented ` + opCode);break;}
+            case "44": {console.log(`not implemented ` + opCode);break;}
+            case "45": {console.log(`not implemented ` + opCode);break;}
+            case "46": {
+                var address = getHexAddress(this.registers[REGISTER_INDEXES.H], this.registers[REGISTER_INDEXES.L]);
+                this.registers[REGISTER_INDEXES.B] = parseInt("0x" + this.memory[parseInt(address)]);
+                break;
+            }
+            case "47": {console.log(`not implemented ` + opCode);break;}
+            case "48": {console.log(`not implemented ` + opCode);break;}
+            case "49": {console.log(`not implemented ` + opCode);break;}
+            case "4a": {console.log(`not implemented ` + opCode);break;}
+            case "4b": {console.log(`not implemented ` + opCode);break;}
+            case "4c": {console.log(`not implemented ` + opCode);break;}
+            case "4d": {console.log(`not implemented ` + opCode);break;}
+            case "4e": {console.log(`not implemented ` + opCode);break;}
             case "4f": {
                 this.registers[REGISTER_INDEXES.C] = this.registers[REGISTER_INDEXES.ACC];    
                 break;
             }
-            case "50": {break;}
-            case "51": {break;}
-            case "52": {break;}
-            case "53": {break;}
-            case "54": {break;}
-            case "55": {break;}
+            case "50": {console.log(`not implemented ` + opCode);break;}
+            case "51": {console.log(`not implemented ` + opCode);break;}
+            case "52": {console.log(`not implemented ` + opCode);break;}
+            case "53": {console.log(`not implemented ` + opCode);break;}
+            case "54": {console.log(`not implemented ` + opCode);break;}
+            case "55": {console.log(`not implemented ` + opCode);break;}
             // MOV DM
             // Moves the value HL is pointing to into register D
             case "56": {
@@ -618,12 +672,12 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.D] = this.registers[REGISTER_INDEXES.ACC];    
                 break;
             }
-            case "58": {break;}
-            case "59": {break;}
-            case "5a": {break;}
-            case "5b": {break;}
-            case "5c": {break;}
-            case "5d": {break;}
+            case "58": {console.log(`not implemented ` + opCode);break;}
+            case "59": {console.log(`not implemented ` + opCode);break;}
+            case "5a": {console.log(`not implemented ` + opCode);break;}
+            case "5b": {console.log(`not implemented ` + opCode);break;}
+            case "5c": {console.log(`not implemented ` + opCode);break;}
+            case "5d": {console.log(`not implemented ` + opCode);break;}
             // MOV whatevers in HL into Register E
             case "5e": {
                 //debugger;
@@ -635,12 +689,12 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.E] = this.registers[REGISTER_INDEXES.ACC];    
                 break;
             }
-            case "60": {break;}
-            case "61": {break;}
-            case "62": {break;}
-            case "63": {break;}
-            case "64": {break;}
-            case "65": {break;}
+            case "60": {console.log(`not implemented ` + opCode);break;}
+            case "61": {console.log(`not implemented ` + opCode);break;}
+            case "62": {console.log(`not implemented ` + opCode);break;}
+            case "63": {console.log(`not implemented ` + opCode);break;}
+            case "64": {console.log(`not implemented ` + opCode);break;}
+            case "65": {console.log(`not implemented ` + opCode);break;}
             // MOV H,M
             // Moves what HL is pointing to into H
             case "66": {
@@ -652,26 +706,26 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.H] = this.registers[REGISTER_INDEXES.ACC];    
                 break;
             }
-            case "68": {break;}
-            case "69": {break;}
-            case "6a": {break;}
-            case "6b": {break;}
-            case "6c": {break;}
-            case "6d": {break;}
-            case "6e": {break;}
+            case "68": {console.log(`not implemented ` + opCode);break;}
+            case "69": {console.log(`not implemented ` + opCode);break;}
+            case "6a": {console.log(`not implemented ` + opCode);break;}
+            case "6b": {console.log(`not implemented ` + opCode);break;}
+            case "6c": {console.log(`not implemented ` + opCode);break;}
+            case "6d": {console.log(`not implemented ` + opCode);break;}
+            case "6e": {console.log(`not implemented ` + opCode);break;}
             // MOV L,A 
             // moves the accumulator into L
             case "6f": {
                 this.registers[REGISTER_INDEXES.L] = this.registers[REGISTER_INDEXES.ACC];    
                 break;
             }
-            case "70": {break;}
-            case "71": {break;}
-            case "72": {break;}
-            case "73": {break;}
-            case "74": {break;}
-            case "75": {break;}
-            case "76": {break;}
+            case "70": {console.log(`not implemented ` + opCode);break;}
+            case "71": {console.log(`not implemented ` + opCode);break;}
+            case "72": {console.log(`not implemented ` + opCode);break;}
+            case "73": {console.log(`not implemented ` + opCode);break;}
+            case "74": {console.log(`not implemented ` + opCode);break;}
+            case "75": {console.log(`not implemented ` + opCode);break;}
+            case "76": {console.log(`not implemented ` + opCode);break;}
             // MOV M,A
             // Moves whatevers in the accumulator into the memory 
             // at the address currently stored in HL
@@ -687,8 +741,11 @@ var intel8080 = (function() {
                 this.memory[parseInt(address)] = this.registers[REGISTER_INDEXES.ACC].toString("16");
                 break;
             }
-            case "78": {break;}
-            case "79": {break;}
+            case "78": {console.log(`not implemented ` + opCode);break;}
+            case "79": {
+                this.registers[REGISTER_INDEXES.ACC] = this.registers[REGISTER_INDEXES.C]
+                break;
+            }
             // MOV A,D
             // Moves D into the ACC register
             case "7a": {
@@ -718,47 +775,47 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.ACC] = parseInt("0x" + this.memory[parseInt(address)]);
                 break;
             }
-            case "7f": {break;}
-            case "80": {break;}
-            case "81": {break;}
-            case "82": {break;}
-            case "83": {break;}
-            case "84": {break;}
-            case "85": {break;}
-            case "86": {break;}
-            case "87": {break;}
-            case "88": {break;}
-            case "89": {break;}
-            case "8a": {break;}
-            case "8b": {break;}
-            case "8c": {break;}
-            case "8d": {break;}
-            case "8e": {break;}
-            case "8f": {break;}
-            case "90": {break;}
-            case "91": {break;}
-            case "92": {break;}
-            case "93": {break;}
-            case "94": {break;}
-            case "95": {break;}
-            case "96": {break;}
-            case "97": {break;}
-            case "98": {break;}
-            case "99": {break;}
-            case "9a": {break;}
-            case "9b": {break;}
-            case "9c": {break;}
-            case "9d": {break;}
-            case "9e": {break;}
-            case "9f": {break;}
-            case "a0": {break;}
-            case "a1": {break;}
-            case "a2": {break;}
-            case "a3": {break;}
-            case "a4": {break;}
-            case "a5": {break;}
-            case "a6": {break;}
-            // AND the accumulator with itself
+            case "7f": {debugger;break;}
+            case "80": {console.log(`not implemented ` + opCode);console.log(`not implemented ` + opCode);break;}
+            case "81": {console.log(`not implemented ` + opCode);break;}
+            case "82": {console.log(`not implemented ` + opCode);break;}
+            case "83": {console.log(`not implemented ` + opCode);break;}
+            case "84": {console.log(`not implemented ` + opCode);break;}
+            case "85": {console.log(`not implemented ` + opCode);break;}
+            case "86": {console.log(`not implemented ` + opCode);break;}
+            case "87": {console.log(`not implemented ` + opCode);break;}
+            case "88": {console.log(`not implemented ` + opCode);break;}
+            case "89": {console.log(`not implemented ` + opCode);break;}
+            case "8a": {console.log(`not implemented ` + opCode);break;}
+            case "8b": {console.log(`not implemented ` + opCode);break;}
+            case "8c": {console.log(`not implemented ` + opCode);break;}
+            case "8d": {console.log(`not implemented ` + opCode);break;}
+            case "8e": {console.log(`not implemented ` + opCode);break;}
+            case "8f": {console.log(`not implemented ` + opCode);break;}
+            case "90": {console.log(`not implemented ` + opCode);break;}
+            case "91": {console.log(`not implemented ` + opCode);break;}
+            case "92": {console.log(`not implemented ` + opCode);break;}
+            case "93": {console.log(`not implemented ` + opCode);break;}
+            case "94": {console.log(`not implemented ` + opCode);break;}
+            case "95": {console.log(`not implemented ` + opCode);break;}
+            case "96": {console.log(`not implemented ` + opCode);break;}
+            case "97": {console.log(`not implemented ` + opCode);break;}
+            case "98": {console.log(`not implemented ` + opCode);break;}
+            case "99": {console.log(`not implemented ` + opCode);break;}
+            case "9a": {console.log(`not implemented ` + opCode);break;}
+            case "9b": {console.log(`not implemented ` + opCode);break;}
+            case "9c": {console.log(`not implemented ` + opCode);break;}
+            case "9d": {console.log(`not implemented ` + opCode);break;}
+            case "9e": {console.log(`not implemented ` + opCode);break;}
+            case "9f": {console.log(`not implemented ` + opCode);break;}
+            case "a0": {console.log(`not implemented ` + opCode);break;}
+            case "a1": {console.log(`not implemented ` + opCode);break;}
+            case "a2": {console.log(`not implemented ` + opCode);break;}
+            case "a3": {console.log(`not implemented ` + opCode);break;}
+            case "a4": {console.log(`not implemented ` + opCode);break;}
+            case "a5": {console.log(`not implemented ` + opCode);break;}
+            case "a6": {console.log(`not implemented ` + opCode);break;}
+            // AND the aconsole.log(`not implemented ` + opCode);ccumulator with itself
             // I'm not entirely sure the point unless we're doing something
             // with the condition bits based off of this
             case "a7": {
@@ -768,13 +825,13 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.ACC] = result;
                 break;
             }
-            case "a8": {break;}
-            case "a9": {break;}
-            case "aa": {break;}
-            case "ab": {break;}
-            case "ac": {break;}
-            case "ad": {break;}
-            case "ae": {break;}
+            case "a8": {console.log(`not implemented ` + opCode);break;}
+            case "a9": {console.log(`not implemented ` + opCode);break;}
+            case "aa": {console.log(`not implemented ` + opCode);break;}
+            case "ab": {console.log(`not implemented ` + opCode);break;}
+            case "ac": {console.log(`not implemented ` + opCode);break;}
+            case "ad": {console.log(`not implemented ` + opCode);break;}
+            case "ae": {console.log(`not implemented ` + opCode);break;}
             // XOR the accumulator with itself 
             // I'm not entirely sure the point unless we're doing something
             // with the condition bits based off of this
@@ -785,22 +842,54 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.ACC] = result;
                 break;
             }
-            case "b0": {break;}
-            case "b1": {break;}
-            case "b2": {break;}
-            case "b3": {break;}
-            case "b4": {break;}
-            case "b5": {break;}
-            case "b6": {break;}
-            case "b7": {break;}
-            case "b8": {break;}
-            case "b9": {break;}
-            case "ba": {break;}
-            case "bb": {break;}
-            case "bc": {break;}
-            case "bd": {break;}
-            case "be": {break;}
-            case "bf": {break;}
+            case "b0": {
+                var acc = this.registers[REGISTER_INDEXES.ACC];
+                var arg = this.registers[REGISTER_INDEXES.B];
+
+                var result = acc | arg;
+
+                this.setConditionBits(result, 8);
+
+                break;
+            }
+            case "b1": {console.log(`not implemented ` + opCode);break;}
+            case "b2": {console.log(`not implemented ` + opCode);break;}
+            case "b3": {console.log(`not implemented ` + opCode);break;}
+            case "b4": {console.log(`not implemented ` + opCode);break;}
+            case "b5": {console.log(`not implemented ` + opCode);break;}
+            case "b6": {
+                let hHexPre = this.registers[REGISTER_INDEXES.H].toString("16");
+                if(hHexPre.length == 1) {
+                    hHexPre = "0" + hHexPre;
+                }
+
+                var hHex = "0x" + hHexPre + "00";
+                if(this.registers[REGISTER_INDEXES.H] == 0) {
+                    hHex = hHex + "0";
+                }
+
+                let lHexPre = this.registers[REGISTER_INDEXES.L].toString("16");
+                if(lHexPre.length == 1) {
+                    lHexPre = "0" + lHexPre;
+                }
+                var lHex = "0x" + lHexPre;
+
+                var acc = this.registers[REGISTER_INDEXES.ACC];
+                var result = acc | (parseInt(hHex) | parseInt(lHex))
+                
+                this.setConditionBits(result, 8);
+
+                break;
+            }
+            case "b7": {console.log(`not implemented ` + opCode);break;}
+            case "b8": {console.log(`not implemented ` + opCode);break;}
+            case "b9": {console.log(`not implemented ` + opCode);break;}
+            case "ba": {console.log(`not implemented ` + opCode);break;}
+            case "bb": {console.log(`not implemented ` + opCode);break;}
+            case "bc": {console.log(`not implemented ` + opCode);break;}
+            case "bd": {console.log(`not implemented ` + opCode);break;}
+            case "be": {console.log(`not implemented ` + opCode);break;}
+            case "bf": {console.log(`not implemented ` + opCode);break;}
             case "c0": {
                 if(!this.conditionBits.zeroBit) {
                     var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
@@ -882,15 +971,28 @@ var intel8080 = (function() {
             // and set the PC to it
             case "c9": {
                 var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
+             //   console.log(address);
                 this.sp = this.sp + 2;
                 // Our program counter is going to be pointed to CALL we need to add 3
                 // To jump past the CALLs address arguments 
                 this.pc = parseInt(address) + 3;
                 return;
             }
-            case "ca": {break;}
-            case "cb": {break;}
-            case "cc": {break;}
+            case "ca": {
+                var address = "0x" + this.memory[this.pc + 2] + this.memory[this.pc + 1]; 
+                // JP if zero
+                if(this.conditionBits.zeroBit) {
+                    this.pc = parseInt(address);
+                    return;
+                }
+                else {
+                    this.pc = this.pc + 3;
+                    return;
+                }
+            
+            }
+            case "cb": {console.log(`not implemented ` + opCode);break;}
+            case "cc": {console.log(`not implemented ` + opCode);break;}
             // CALL
             // Calls a certain sub routine
             case "cd": {
@@ -906,9 +1008,25 @@ var intel8080 = (function() {
                 this.pc = parseInt(address); 
                 return;
             }
-            case "ce": {break;}
-            case "cf": {break;}
-            case "d0": {break;}
+            case "ce": {console.log(`not implemented ` + opCode);break;}
+            case "cf": {console.log(`not implemented ` + opCode);break;}
+            case "d0": {
+                
+                if(this.conditionBits.carry == 0) {
+                    console.log(this.pc);
+                    var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
+                    this.sp = this.sp + 2;
+                    // Our program counter is going to be pointed to CALL we need to add 3
+                    // To jump past the CALLs address arguments 
+                    this.pc = parseInt(address) + 3;
+                    return;
+                }
+                else {
+                    console.log('here');
+                }
+                
+                break;
+            }
             // POP D
             // Populate the DE registers with the next 2 items on the stack
             case "d1": {
@@ -919,13 +1037,21 @@ var intel8080 = (function() {
                 this.sp = this.sp + 1;
                 break;
             }
-            case "d2": {break;}
+            case "d2": {
+                if (!this.conditionBits.carry) {
+                    var address = "0x" + this.memory[this.pc + 2] + this.memory[this.pc + 1]; 
+                    this.pc = parseInt(address);
+                } else {
+                    this.pc = this.pc + 3;
+                }
+                return;
+            }
             case "d3": {
                 // Output to the bus?
                 this.pc = this.pc + 2;    
                 return;
             }
-            case "d4": {break;}
+            case "d4": {console.log(`not implemented ` + opCode);break;}
             // PUSH D
             // Pushes the register pair DE onto the stack
             case "d5": {
@@ -939,6 +1065,7 @@ var intel8080 = (function() {
                 break;
             }
             case "d6": {
+               
                 var arg = parseInt("0x" + this.memory[this.pc + 1]);
                 var accVal = parseInt("0x" + this.registers[REGISTER_INDEXES.ACC]);
                 var result = arg - accVal;
@@ -947,7 +1074,7 @@ var intel8080 = (function() {
                 this.pc = this.pc + 2;
                 return;
             }
-            case "d7": {break;}
+            case "d7": {console.log(`not implemented ` + opCode);break;}
             case "d8": {
                 if(this.conditionBits.carry == 1) {
                     var address = "0x" + this.memory[this.sp + 1] + this.memory[this.sp];
@@ -960,7 +1087,7 @@ var intel8080 = (function() {
                 
                 break;
             }
-            case "d9": {break;}
+            case "d9": {console.log(`not implemented ` + opCode);break;}
             // If CY set to 1 jump to address argument
             case "da": {
                 if(this.conditionBits.carry == 1) {
@@ -974,15 +1101,15 @@ var intel8080 = (function() {
             // Not implemented
             case "db": {
                 // Controller input
-                this.registers[REGISTER_INDEXES.ACC] = "00"; 
+                this.registers[REGISTER_INDEXES.ACC] = 3; 
                 this.pc = this.pc + 2;
                 return;
             }
-            case "dc": {break;}
-            case "dd": {break;}
-            case "de": {break;}
-            case "df": {break;}
-            case "e0": {break;}
+            case "dc": {console.log(`not implemented ` + opCode);break;}
+            case "dd": {console.log(`not implemented ` + opCode);break;}
+            case "de": {console.log(`not implemented ` + opCode);break;}
+            case "df": {console.log(`not implemented ` + opCode);break;}
+            case "e0": {console.log(`not implemented ` + opCode);break;}
             // POP 
             // pops whats currently on the stack into the HL registers
             case "e1": {
@@ -992,9 +1119,9 @@ var intel8080 = (function() {
                 this.sp = this.sp + 1;
                 break;
             }
-            case "e2": {break;}
-            case "e3": {break;}
-            case "e4": {break;}
+            case "e2": {console.log(`not implemented ` + opCode);break;}
+            case "e3": {console.log(`not implemented ` + opCode);break;}
+            case "e4": {console.log(`not implemented ` + opCode);break;}
             // PUSH H
             // Pushes the contents of registers HL onto the stack
             case "e5": {
@@ -1020,10 +1147,10 @@ var intel8080 = (function() {
                 this.pc = this.pc + 2;
                 return;
             }
-            case "e7": {break;}
-            case "e8": {break;}
-            case "e9": {break;}
-            case "ea": {break;}
+            case "e7": {console.log(`not implemented ` + opCode);break;}
+            case "e8": {console.log(`not implemented ` + opCode);break;}
+            case "e9": {console.log(`not implemented ` + opCode);break;}
+            case "ea": {console.log(`not implemented ` + opCode);break;}
             // XCHG 
             // swaps the contents between DE and HL
             case "eb": {
@@ -1037,13 +1164,14 @@ var intel8080 = (function() {
                 this.registers[REGISTER_INDEXES.L] = tempE;
                 break;
             }
-            case "ec": {break;}
-            case "ed": {break;}
-            case "ee": {break;}
+            case "ec": {console.log(`not implemented ` + opCode);break;}
+            case "ed": {console.log(`not implemented ` + opCode);break;}
+            case "ee": {console.log(`not implemented ` + opCode);break;}
             case "ef": {
+                console.log(`not implemented ` + opCode);
                 break;
             }
-            case "f0": {break;}
+            case "f0": {console.log(`not implemented ` + opCode);break;}
             // POP PSW
             // Pops the PSW flags and the ACC off the stack
             case "f1": {
@@ -1060,9 +1188,9 @@ var intel8080 = (function() {
                 this.sp = this.sp + 1;
                 break;
             }
-            case "f2": {break;}
-            case "f3": {break;}
-            case "f4": {break;}
+            case "f2": {console.log(`not implemented ` + opCode);break;}
+            case "f3": {console.log(`not implemented ` + opCode);break;}
+            case "f4": {console.log(`not implemented ` + opCode);break;}
             // PUSH PSW
             // Pushes the conditional flags and ACC onto the stack
             case "f5": {
@@ -1074,14 +1202,15 @@ var intel8080 = (function() {
                 this.memory[this.sp] = this.registers[REGISTER_INDEXES.ACC].toString("16");
                 break;
             }
-            case "f6": {break;}
-            case "f7": {break;}
-            case "f8": {break;}
-            case "f9": {break;}
-            case "fa": {break;}
-            case "fb": {break;}
-            case "fc": {break;}
-            case "fd": {break;}
+            case "f6": {console.log(`not implemented ` + opCode);break;}
+            case "f7": {console.log(`not implemented ` + opCode);break;}
+            case "f8": {console.log(`not implemented ` + opCode);break;}
+            case "f9": {console.log(`not implemented ` + opCode);break;}
+            case "fa": {console.log(`not implemented ` + opCode);break;}
+            case "fb": {
+                break;}
+            case "fc": {console.log(`not implemented ` + opCode);break;}
+            case "fd": {console.log(`not implemented ` + opCode);break;}
             // CPI - Compares the accumulator value with 
             // argument byte
             case "fe": {
@@ -1097,8 +1226,10 @@ var intel8080 = (function() {
                 this.pc = this.pc + 2;
                 return;
             }
-            case "ff": {break;}
-            default: {}
+            case "ff": {console.log(`not implemented ` + opCode);break;}
+            default: {
+                console.log('wtf');
+            }
         }
         
         this.pc = this.pc + 1;
