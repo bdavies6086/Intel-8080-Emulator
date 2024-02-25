@@ -1,7 +1,7 @@
-import { hexToNumber } from "../processor/operations/utils"
 import { invaders } from "./invaders"
 
-const invadersMemory = invaders();
+export const readWith = (memory: string[]) => (address: string) => memory[parseInt(address, 16)];
+export const read = readWith(invaders);
 
-export const read = (address: string) => invadersMemory[hexToNumber(address)];
-export const write = (address: string, value: string) => invadersMemory[hexToNumber(address)] = value;
+export const writeWith = (memory: string[]) => (address: string, value: string) => memory[parseInt(address, 16)] = value
+export const write = writeWith(invaders)
