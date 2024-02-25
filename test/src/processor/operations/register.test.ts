@@ -11,7 +11,8 @@ describe("register", () => {
             [RegisterKeys.E]: "EE",
             [RegisterKeys.H]: "HH",
             [RegisterKeys.L]: "LL",
-            [RegisterKeys.SP]: "SP"
+            [RegisterKeys.SP]: "SP",
+            [RegisterKeys.PC]: "00"
         }
 
         const movBC = mov(register, RegisterKeys.B, RegisterKeys.C);
@@ -32,7 +33,8 @@ describe("register", () => {
             [RegisterKeys.E]: "EE",
             [RegisterKeys.H]: "HH",
             [RegisterKeys.L]: "LL",
-            [RegisterKeys.SP]: "SP"
+            [RegisterKeys.SP]: "SP",
+            [RegisterKeys.PC]: "00"
         }
 
         const assignToRegisterC = assignToRegister(register, RegisterKeys.C);
@@ -53,7 +55,8 @@ describe("register", () => {
             [RegisterKeys.E]: "EE",
             [RegisterKeys.H]: "HH",
             [RegisterKeys.L]: "LL",
-            [RegisterKeys.SP]: "SP"
+            [RegisterKeys.SP]: "SP",
+            [RegisterKeys.PC]: "00"
         }
 
         const readRegisterB = readRegister8(register, RegisterKeys.B);
@@ -72,7 +75,8 @@ describe("register", () => {
             [RegisterKeys.E]: "EE",
             [RegisterKeys.H]: "HH",
             [RegisterKeys.L]: "LL",
-            [RegisterKeys.SP]: "SP"
+            [RegisterKeys.SP]: "SP",
+            [RegisterKeys.PC]: "00"
         }
 
         const readRegisterBC = readRegister16(register, RegisterKeys.B, RegisterKeys.C);
