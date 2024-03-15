@@ -43,6 +43,17 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
 
     if(options.setConditionalBits) {
         conditionBits.sign = sign;
+        conditionBits.zeroBit = result == 0;
+
+        let xor = (value1 ^ value2) & 0x10; 
+        let res = (value1 + value2) & 0x10; 
+        if( xor != res ){
+            conditionBits.auxCarry = true;
+        } else {
+            conditionBits.auxCarry = false;
+        }
+
+
 
         let bitCounter = 0;
         let val = result;
@@ -56,16 +67,20 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
         conditionBits.parBit = bitCounter % 2 == 0;
     }
 
-    return result.toString(16);
+    const padStartMax = options.is8BitOp ? 2 : 4;
+
+    return result.toString(16).padStart(padStartMax, '0');
 }
 
 
 const addition = (val1: number, val2: number, carry: number) => val1 + val2 + carry;
-const subtraction = (val1: number, val2: number, carry: number) => val1 - val2 - carry;
+const subtraction = (val1: number, val2: number, carry: number) => (val1 - carry) - val2;
 
 
 export const add8Bit = arithmeticWrapper(addition);
 export const sub8Bit = arithmeticWrapper(subtraction);
+
+export const add16Bit = arithmeticWrapper(addition, { setConditionalBits: false, is8BitOp: false, setCarry: true, withCarry: false});
 
 
 export const addWithCarry = arithmeticWrapper(addition, { ...defaultArithmeticOptions, withCarry: true })
@@ -85,17 +100,108 @@ export const inx = (register: Register, key1: RegisterKeys, key2: RegisterKeys) 
 
     const result = regVal + 1;
 
+
     const resStr = result.toString(16).padStart(4, '0');
+    
 
     register[key1] = resStr.slice(0, 2);
     register[key2] = resStr.slice(2, 4);
 }
 
 // TODO, how to implement this nicely?
-export const inr = (register: Register, key1: RegisterKeys, key2: RegisterKeys, conditionBits: ConditionBits) => () => {
-    const regVal = parseInt(register[key1] + register[key2], 16);
+export const inrOp = (val1: number, val2: number, carry = 0) => {
+    let result = val1 + val2;
+    if(result > 255) result = 0;
+    if(result < 0) result = 255;
+    return result;
+}
 
-    const result = regVal + 1;
+export const inr = arithmeticWrapper(inrOp, {...defaultArithmeticOptions, setCarry: false, });
 
 
+export const dcrOp = (val1: number, val2: number, carry = 0) => {
+    const result = val1 - val2;
+    return result;
+}
+
+export const dcr = arithmeticWrapper(inrOp, {...defaultArithmeticOptions, setCarry: false, });
+
+export const dcxOp = (val1: number, val2: number, carry = 0) => {
+    const result = val1 - val2;
+    return result;
+}
+
+export const dcx = arithmeticWrapper(dcxOp, { setCarry: false, setConditionalBits: false, is8BitOp: false, withCarry: false});
+
+
+export const rlc = (conditionBits: ConditionBits, register: Register) => () => {
+    
+    const acc = parseInt(register[RegisterKeys.ACC], 16);
+
+    const result = acc << 1;
+
+    const msb = result & 256;
+
+    conditionBits.carry = msb > 0;
+
+    const finalResult = (conditionBits.carry ? result | 1 : result) & 255;
+
+    register[RegisterKeys.ACC] = finalResult.toString(16).padStart(2, '0');
+}
+
+export const ral = (conditionBits: ConditionBits, register: Register) => () => {
+    const acc = parseInt(register[RegisterKeys.ACC], 16);
+
+    const carry = conditionBits.carry;
+
+    const result = acc << 1;
+
+    const finalResult = carry ? result | 1 : result;
+
+    conditionBits.carry = (finalResult & 256) > 0;
+
+    const finalResultTo8Bit = finalResult & 255;
+
+    register[RegisterKeys.ACC] = finalResultTo8Bit.toString(16).padStart(2, '0');
+}
+
+export const rrc = (conditionBits: ConditionBits, register: Register) => () => {
+    
+    const acc = parseInt(register[RegisterKeys.ACC], 16);
+
+    const prevBit = (acc & 1) > 0;
+
+    const result = acc >> 1;
+
+    const finalResult = prevBit ? result | 128 : result;
+
+    conditionBits.carry = prevBit;
+
+    register[RegisterKeys.ACC] = finalResult.toString(16).padStart(2, '0');;
+}
+
+export const rar = (conditionBits: ConditionBits, register: Register) => () => {
+
+    const accVal = parseInt(register[RegisterKeys.ACC], 16);
+
+    const lsb = (accVal & 1) > 0;
+
+    const result = accVal >> 1 | (conditionBits.carry ? 128 : 0);
+
+
+    conditionBits.carry = lsb;
+
+    register[RegisterKeys.ACC] = result.toString(16).padStart(2, '0');;
+}
+
+export const cma = (register: Register) => () => {
+    const acc = register[RegisterKeys.ACC];
+
+    const result = (~parseInt(acc, 16)).toString(16).padStart(2, '0');;
+
+    register[RegisterKeys.ACC] = result;
+}
+
+export const cmc = (conditionBits: ConditionBits) => () => {
+    conditionBits.carry = !conditionBits.carry;
 }
