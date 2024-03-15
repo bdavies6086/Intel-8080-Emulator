@@ -60,62 +60,24 @@ export const input = (register: Register) => {
 }
 
 
-export const insertCredit = () => {
+export const insertCredit = (clear = false) => {
     
     port1 = port1 | 1;
 }
 
-const start = () => {
-    port1 = port1 | 4;
+export const start = (clear = false) => {
+    port1 = clear ? port1 ^ 4 : port1 | 4;
 }
 
-const fire = () => {
-    port1 = port1 | 16;
+export const fire = (clear = false) => {
+    port1 = clear ? port1 ^ 16 : port1 | 16;
 }
 
-const left = () => {
-    port1 = port1 | 32;
+export const left = (clear = false) => {
+    port1 = clear ? port1 ^ 32 : port1 | 32;
 }
 
 
-const right = () => {
-    port1 = port1 | 64;
+export const right = (clear = false) => {
+    port1 = clear ? port1 ^ 64 : port1 | 64;
 }
-
-window.addEventListener("keydown", (event) => {
-    console.log(event.key);
-    if(event.key == " ") {
-        fire();
-    }
-    else if(event.key == "Enter") {
-        start();
-    }
-    else if(event.key.toLowerCase() == "a") {
-        left();
-    }
-    else if(event.key.toLowerCase() == "d") {
-        right();
-    }
-    else if(event.key.toLowerCase() == "c") {
-        insertCredit();
-    }
-})
-
-window.addEventListener("keyup", (event) => {
-    console.log(event.key);
-    if(event.key == " ") {
-        port1 = port1 ^ 16;
-    }
-    else if(event.key == "Enter") {
-        start();
-    }
-    else if(event.key.toLowerCase() == "a") {
-        port1 = port1 ^ 32;
-    }
-    else if(event.key.toLowerCase() == "d") {
-        port1 = port1 ^ 64;
-    }
-    else if(event.key.toLowerCase() == "c") {
-        port1 = port1 ^ 1;
-    }
-})

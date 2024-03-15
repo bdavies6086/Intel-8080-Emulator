@@ -1,13 +1,24 @@
 import { read } from './memory';
 import { intel8080 } from './processor/index';
+import { fire, insertCredit, left, right, start } from './processor/operations/special';
 
 
-window.onload = () => {
+declare global {
+    interface Window {
+        initInvaders: () => void,
+        cleanupInvaders: () => void
+    }
+}
 
+let stopRun = false;
+
+window.initInvaders = () => {
+    stopRun = false;
+    
     const intel = intel8080();
 
     const theCanvas = document.getElementById("screen") as HTMLCanvasElement;
-    if(!theCanvas) throw new Error('');
+    if(!theCanvas) throw new Error('cannot find screen');
     const context = theCanvas.getContext("2d");
     function render() {
         if(!context) return;
@@ -42,13 +53,67 @@ window.onload = () => {
         intel.run();
         render();
 
-        setTimeout(() => {
-            run();
-        }, 1000/60)
+        if(!stopRun) {
+            
+            setTimeout(() => {
+            
+                run();
+            }, 1000/60)
+        }
     }
     
     run();
-    
 
+    const keyDown = (event) => {
+        console.log(event.key);
+        if(event.key == " ") {
+            fire();
+        }
+        else if(event.key == "Enter") {
+            start();
+        }
+        else if(event.key.toLowerCase() == "a") {
+            left();
+        }
+        else if(event.key.toLowerCase() == "d") {
+            right();
+        }
+        else if(event.key.toLowerCase() == "c") {
+            insertCredit();
+        }
+    };
+
+    const keyUp = (event) => {
+        console.log(event.key);
+        if(event.key == " ") {
+            fire(true);
+        }
+        else if(event.key == "Enter") {
+            start();
+        }
+        else if(event.key.toLowerCase() == "a") {
+            left(true);
+        }
+        else if(event.key.toLowerCase() == "d") {
+            right(true);
+        }
+        else if(event.key.toLowerCase() == "c") {
+            insertCredit(true);
+        }
+    }
+
+
+    window.addEventListener("keydown", keyDown);
+
+    window.addEventListener("keyup", keyUp);
+
+
+    
+    window.cleanupInvaders = () => {
+        stopRun = true;
+        window.removeEventListener("keydown", keyDown);
+        window.removeEventListener("keyup", keyUp);
+
+    }
 }
 

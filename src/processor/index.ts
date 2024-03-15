@@ -166,7 +166,7 @@ export const intel8080 = () => {
     const met = () => {
         try {
 
-            for(let j = 0; j < 32000; j++) {
+            for(let j = 0; j < 4000; j++) {
 
                 const pc = (register[RegisterKeys.PC1] + register[RegisterKeys.PC2]).toString().toUpperCase();
                 // if(debugProcs[pc]) {
