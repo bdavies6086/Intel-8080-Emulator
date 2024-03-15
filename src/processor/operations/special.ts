@@ -1,6 +1,7 @@
 import { readArg } from "../../memory";
 import { Register, RegisterKeys } from "../types";
 
+let shiftAmt = 0;
 let shiftData = 0;
 let port1 = 0;
 
@@ -8,6 +9,10 @@ export const out = (register: Register) => {
     const outArg = readArg(register);
 
     switch(outArg) {
+        case "02": {
+            shiftAmt = parseInt(register[RegisterKeys.ACC], 16);
+            break;
+        }
         case "03": {
 
             break;
@@ -34,9 +39,13 @@ export const input = (register: Register) => {
             port1 = port1 & 254;
             break;
         }
+        case "02": {
+            register[RegisterKeys.ACC] = "03";
+            break;
+        }
         case "03": {
 
-            const readShift = shiftData & 255;
+            const readShift = shiftData >> (8 - shiftAmt);
 
             register[RegisterKeys.ACC] = readShift.toString(16).padStart(2, '0');
 
@@ -47,6 +56,7 @@ export const input = (register: Register) => {
             break;
         }
     }
+    
 }
 
 
