@@ -6,8 +6,10 @@ export const enum RegisterKeys {
     E,
     H,
     L,
-    SP,
-    PC
+    SP1,
+    SP2,
+    PC1,
+    PC2
 }
 
 export type Register = Record<RegisterKeys, string>
