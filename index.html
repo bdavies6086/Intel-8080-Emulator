@@ -1,38 +1,5 @@
 <head>
-
     <script src="out.js"></script>
-    <script>
-
-        function memoryDump() {
-            startAddress = document.getElementById("startAddress").value;
-            endAddress = document.getElementById("endAddress").value;
-            memoryPane = document.getElementById("memoryPane");
-            console.log(`${startAddress}   ${endAddress}`);
-            setInterval(() => {
-               // debugger;
-                memoryPane.innerHTML = "";
-                let stintAddress = parseInt("0x" + startAddress);
-                let enintAddress = parseInt("0x" + endAddress);
-
-                let line = "";
-
-                for(let i = stintAddress; i < enintAddress + 1; i++) {
-                    if(i % 16 == 0) {
-                        var a = document.createElement("div");
-                        a.innerHTML = line;
-                        memoryPane.appendChild(a);
-                        line = "";
-                    }
-
-                    line = line + "     " + window.processor.memory[i];
-                }
-
-
-
-            }, 10);
-        }
-
-    </script>
 </head>
 <body>
 
