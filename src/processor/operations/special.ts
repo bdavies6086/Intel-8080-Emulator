@@ -35,8 +35,9 @@ export const input = (register: Register) => {
         case "01": {
             
             register[RegisterKeys.ACC] = port1.toString(16).padStart(2, '0');
-
-            port1 = port1 & 254;
+            if(register[RegisterKeys.PC1] + register[RegisterKeys.PC2] == "0020") {
+                port1 = port1 & 254;
+            }
             break;
         }
         case "02": {

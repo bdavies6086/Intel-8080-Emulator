@@ -35,6 +35,8 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
 
     const resPostOp = op(value1, value2, options.withCarry && conditionBits.carry ? 1 : 0);
 
+    conditionBits.auxCarry = (resPostOp - value1) > 16;
+
     const { carry, sign, result } = handleBits(resPostOp, numOfBits);
 
     if(options.setCarry) {
@@ -44,16 +46,6 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
     if(options.setConditionalBits) {
         conditionBits.sign = sign;
         conditionBits.zeroBit = result == 0;
-
-        let xor = (value1 ^ value2) & 0x10; 
-        let res = (value1 + value2) & 0x10; 
-        if( xor != res ){
-            conditionBits.auxCarry = true;
-        } else {
-            conditionBits.auxCarry = false;
-        }
-
-
 
         let bitCounter = 0;
         let val = result;
@@ -204,4 +196,45 @@ export const cma = (register: Register) => () => {
 
 export const cmc = (conditionBits: ConditionBits) => () => {
     conditionBits.carry = !conditionBits.carry;
+}
+
+export const daa = (conditionBits: ConditionBits, register: Register) => {
+    const acc = parseInt(register[RegisterKeys.ACC], 16);
+    let adjustedResult = acc;
+
+    let lsb = acc & 15;
+    if(lsb > 9 || conditionBits.auxCarry) { 
+        adjustedResult = (adjustedResult + 6);
+        conditionBits.auxCarry = true;
+    }
+    else {
+        conditionBits.auxCarry = false;
+    }
+
+    let msb = (adjustedResult & 240) >> 4;
+    if(msb > 9 || conditionBits.carry) {
+        adjustedResult = adjustedResult + 96;
+        conditionBits.carry = true;
+        
+    }
+    else {
+        conditionBits.carry = false;
+    }
+
+    const { sign, result } = handleBits(adjustedResult, 8);
+
+    conditionBits.sign = sign;
+    conditionBits.zeroBit = result == 0;
+    let bitCounter = 0;
+        let val = result;
+        for(let i = 0; i < 8; i++) {
+            if(val & 0x1) {
+                bitCounter = bitCounter + 1;
+            }
+            val = val >> 1;
+        }
+
+        conditionBits.parBit = bitCounter % 2 == 0;
+
+    register[RegisterKeys.ACC] = (result & 255).toString(16);
 }

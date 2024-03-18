@@ -1,6 +1,6 @@
 import { read, readArg, write } from "../../memory";
 import { ConditionBits, Register, RegisterKeys } from "../types";
-import { add16Bit, add8Bit, addWithCarry, and, cma, cmc, dcx, inr, inx, or, ral, rar, rlc, rrc, sub8Bit, subWithCarry, xor } from "./arithmetic";
+import { add16Bit, add8Bit, addWithCarry, and, cma, cmc, daa, dcx, inr, inx, or, ral, rar, rlc, rrc, sub8Bit, subWithCarry, xor } from "./arithmetic";
 import { ca, cc, cm, cnc, cnz, cp, cpe, cpo, cz, jc, jm, jnc, jnz, jp, jpe, jpo, jz, rc, ret, rm, rnc, rnz, rp, rpe, rpo, rst0, rst1, rst2, rst3, rst4, rst5, rst6, rst7, rz } from "./calls";
 import { assignToRegister, assignToRegister16, lda, lhld, lxi, mov, readRegister16, readRegister8, shld, sta, stax, xchg } from "./register";
 import { input, out } from "./special";
@@ -58,8 +58,7 @@ export const buildOperations = (register: Register, conditionBits: ConditionBits
     "24": { size: 1, handlesPc: false, op: () => assignToRegister(register, RegisterKeys.H)(inr(conditionBits)(register[RegisterKeys.H], "0x1"))},
     "25": { size: 1, handlesPc: false, op: () => assignToRegister(register, RegisterKeys.H)(inr(conditionBits)(register[RegisterKeys.H], "-0x1"))},
     "26": { size: 2, handlesPc: false, op: () => assignToRegister(register, RegisterKeys.H)(readArg(register))},
-    // DAA special op, not used in space invaders
-    "27": { size: 1, handlesPc: false, op: noop},
+    "27": { size: 1, handlesPc: false, op: () => daa(conditionBits, register)},
     "28": { size: 1, handlesPc: false, op: noop},
     "29": { size: 1, handlesPc: false, op: () => assignToRegister16(register, RegisterKeys.H, RegisterKeys.L)(add16Bit(conditionBits)(register[RegisterKeys.H] + register[RegisterKeys.L], register[RegisterKeys.H] + register[RegisterKeys.L]))},
     "2a": { size: 3, handlesPc: false, op: lhld(register)},
