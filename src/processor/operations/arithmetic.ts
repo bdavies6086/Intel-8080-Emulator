@@ -35,8 +35,6 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
 
     const resPostOp = op(value1, value2, options.withCarry && conditionBits.carry ? 1 : 0);
 
-    conditionBits.auxCarry = (resPostOp - value1) > 16;
-
     const { carry, sign, result } = handleBits(resPostOp, numOfBits);
 
     if(options.setCarry) {
@@ -44,6 +42,8 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
     }
 
     if(options.setConditionalBits) {
+
+        conditionBits.auxCarry = (Math.abs(resPostOp - value1) > 16) && (value1 < 16 || (value1 < 31));
         conditionBits.sign = sign;
         conditionBits.zeroBit = result == 0;
 
@@ -200,6 +200,7 @@ export const cmc = (conditionBits: ConditionBits) => () => {
 
 export const daa = (conditionBits: ConditionBits, register: Register) => {
     const acc = parseInt(register[RegisterKeys.ACC], 16);
+
     let adjustedResult = acc;
 
     let lsb = acc & 15;
@@ -215,7 +216,6 @@ export const daa = (conditionBits: ConditionBits, register: Register) => {
     if(msb > 9 || conditionBits.carry) {
         adjustedResult = adjustedResult + 96;
         conditionBits.carry = true;
-        
     }
     else {
         conditionBits.carry = false;
