@@ -67,6 +67,8 @@ window.initInvaders = () => {
     const keyDown = (event) => {
         console.log(event.key);
         if(event.key == " ") {
+            // Stop page scrolling
+            event.preventDefault();
             fire();
         }
         else if(event.key == "Enter") {
