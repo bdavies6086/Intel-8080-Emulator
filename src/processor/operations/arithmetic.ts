@@ -43,7 +43,10 @@ const arithmeticWrapper = (op: ArithmeticOperation, options = defaultArithmeticO
 
     if(options.setConditionalBits) {
 
-        conditionBits.auxCarry = (Math.abs(resPostOp - value1) > 16) && (value1 < 16 || (value1 < 31));
+        // We only care about aux carry in addition ops as space invaders
+        // handles BCD with addition only
+        const isAddition = resPostOp - value1 >= 0;
+        conditionBits.auxCarry = isAddition && ((value1 & 8) == 8 || (value2 & 8) == 8) && (resPostOp & 8) == 0;
         conditionBits.sign = sign;
         conditionBits.zeroBit = result == 0;
 
