@@ -152,102 +152,56 @@ export const intel8080 = () => {
 
     const ops = buildOperations(register, conditionBits, enableInterrupts);
 
-    const a = document.getElementById("isrdelay");
-
     let rs1 = true;
     let lastVblank = new Date().getTime();
 
     const instrSet = new Set();
+    let logInstruction = false;
 
-    let odd = "";
-
-    let loglol = false;
-
-    const met = () => {
+    const run = () => {
         try {
 
             for(let j = 0; j < 4000; j++) {
 
                 const pc = (register[RegisterKeys.PC1] + register[RegisterKeys.PC2]).toString().toUpperCase();
-                // if(debugProcs[pc]) {
-                //     if(debugProcs[pc] == "ScanLine224") {
-                //         // turn off vblank for a bit so we can actually debug..
-                //         // lastVblank = 100000000000000000090000;
-                //         loglol = true;
-                //     };
-                //     //console.log(debugProcs[pc]);
-                // }
-
-               
-
-                if(loglol) console.log(JSON.stringify(register));
-
-                // if(parseInt(pc, 16) >= 6761 && parseInt(pc, 16) <= 6782) {
-                //    // console.log(JSON.stringify(register));
-                // } 
-
-
-              
 
                 const inst = read(register[RegisterKeys.PC1] + register[RegisterKeys.PC2]);
-                if(!instrSet.has(inst) && loglol) {
-                  //  console.log((inst));
+                if(!instrSet.has(inst) && logInstruction) {
+                  console.log((inst));
                 }
                 instrSet.add(inst);
           
-            let op = ops[read(register[RegisterKeys.PC1] + register[RegisterKeys.PC2])];
+                let op = ops[read(register[RegisterKeys.PC1] + register[RegisterKeys.PC2])];
 
-            if((new Date().getTime() - lastVblank) > (1000/70) && enableInterrupts.value) {
-                
-                if(rs1) {
-                    op = ops["cf"];
-                 
+                if((new Date().getTime() - lastVblank) > (1000/70) && enableInterrupts.value) {
+                    
+                    if(rs1) {
+                        op = ops["cf"];
+                    
+                    }
+                    else { 
+                        op = ops["d7"];
+                    
+                    }
+                    rs1 = !rs1;
+                    lastVblank = new Date().getTime();
                 }
-                else { 
-                    op = ops["d7"];
-                 
+
+                if(!op) throw new Error('shouldnt get here' + JSON.stringify(register));
+        
+                op.op();
+
+                if(!op.handlesPc) {
+                    incrementPC(register, op.size);
                 }
-                rs1 = !rs1;
-                lastVblank = new Date().getTime();
             }
-
-           
-      
-
-            if(!op) throw new Error('shouldnt get here' + JSON.stringify(register));
-       
-            op.op();
-
-         
-            if(!op.handlesPc) {
-                incrementPC(register, op.size);
-            }
-            }
-
         }
         catch(err) {
-            console.log('lol', err);
+            console.error('failed to process instruction', err);
         }
     }
-
 
     return {
-        run: () => {
-
-            
-            met();
-            const start = parseInt("2400",16);
-
-            const end = parseInt(register[RegisterKeys.SP1] + register[RegisterKeys.SP2], 16);
-
-            const mem = getMemory();
-
-            //  console.log(JSON.stringify(mem.slice(end, start)))
-
-            
-            
-            
-        }
+        run
     }
-
 }

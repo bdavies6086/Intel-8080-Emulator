@@ -65,7 +65,6 @@ window.initInvaders = () => {
     run();
 
     const keyDown = (event) => {
-        console.log(event.key);
         if(event.key == " ") {
             // Stop page scrolling
             event.preventDefault();
@@ -86,7 +85,6 @@ window.initInvaders = () => {
     };
 
     const keyUp = (event) => {
-        console.log(event.key);
         if(event.key == " ") {
             fire(true);
         }
